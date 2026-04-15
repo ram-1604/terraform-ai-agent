@@ -1,0 +1,25 @@
+name: PR Validation
+
+on:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+
+      - run: terraform init
+      - run: terraform validate
+
+      - run: |
+          terraform plan -out=tfplan
+          terraform show -json tfplan > plan.json
+
+      - name: OPA Policy Check
+        uses: instrumenta/conftest-action@v0.4.0
+        with:
+          policy: policies/
+          files: plan.json
